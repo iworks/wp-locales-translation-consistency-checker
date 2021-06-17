@@ -20,9 +20,10 @@
  * load WordPress without theme
  */
 define( 'WP_USE_THEMES', false );
+$root = dirname( dirname( __FILE__ ) );
 
-require '../etc/config.php';
-require '../includes/functions.php';
+require $root . '/etc/config.php';
+require $root . '/includes/functions.php';
 
 if ( ! has_action( 'wp_locales_translation_consistency_checker_run' ) ) {
 	$string  = "\e[31m" . PHP_EOL;

@@ -4,12 +4,7 @@ error_reporting( E_ALL );
 if ( isset( $_SERVER['SERVER_NAME'] ) ) {
 	die( 'not allow with www' );
 }
-
 $root = dirname( dirname( __FILE__ ) );
-
-print_r( $root );
-
-
 if ( ! is_file( $root . '/etc/config.php' ) ) {
 	echo "\e[91m";
 	echo 'ERROR!', PHP_EOL;
@@ -19,8 +14,9 @@ if ( ! is_file( $root . '/etc/config.php' ) ) {
 	echo "\e[39m";
 	die;
 }
-
 require $root . '/etc/config.php';
-
+if ( isset( $HTTP_HOST ) ) {
+	$_SERVER['HTTP_HOST'] = $HTTP_HOST;
+}
 require $wordpress_path . '/wp-load.php';
 
