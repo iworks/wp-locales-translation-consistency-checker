@@ -160,17 +160,30 @@ class wp_locales_translation_consistency_checker {
 		return $template;
 	}
 
-	public function run( $config ) {
-		$dir   = wp_upload_dir();
-		$root  = dirname( $dir['basedir'] ) . '/languages';
-		$files = array();
-		if ( is_dir( $root ) ) {
-			foreach ( scandir( $root ) as $file ) {
-				if ( preg_match( '/' . $config['language_code'] . '.*po$/', $file ) ) {
-					$files[] = $root . '/' . $file;
-				}
-			}
-		}
+    public function run( $config ) {
+        $root  = WP_CONTENT_DIR . '/languages';
+        $dirs = array(
+            $root,
+            $root.'/plugins',
+            $root.'/themes',
+        );
+        $files = array();
+
+        foreach( $dirs as $dir ) {
+            if ( !is_dir( $dir ) ) {
+                continue;
+            }
+            foreach ( scandir( $dir ) as $file ) {
+                if ( preg_match( '/' . $config['language_code'] . '.*po$/', $file ) ) {
+                    $files[] = $dir . '/' . $file;
+                }
+            }
+        }
+
+d($files);
+
+die;
+
 		if ( empty( $files ) ) {
 			die( 'files not found' );
 		}
