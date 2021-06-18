@@ -329,9 +329,16 @@ class wp_locales_translation_consistency_checker {
 		);
 		$query = new WP_Query( $args );
 		foreach ( $query->posts as $post_id ) {
+			$msgid = get_post_meta( $post_id, $this->meta_string, true );
+			if (
+				isset( $config['po_export_string_max_length'] )
+				&& 0 < $config['po_export_string_max_length'] ) {
+				&& strlen( $msgid ) > $config['po_export_string_max_length']
+				) continue;
+			}
 			printf(
 				'msgid "%s"%s',
-				addslashes( get_post_meta( $post_id, $this->meta_string, true ) ),
+				addslashes( $msgid ),
 				PHP_EOL
 			);
 			printf(

@@ -36,10 +36,11 @@ if ( ! has_action( 'wp_locales_translation_consistency_checker_run' ) ) {
 }
 
 $config = array(
-	'language_set'           => $language_set,
-	'language_code'          => $language_code,
-	'po_short_language_code' => $po_short_language_code,
-	'po_plural_forms'        => $po_plural_forms,
+	'language_set'                => $language_set,
+	'language_code'               => $language_code,
+	'po_short_language_code'      => $po_short_language_code,
+	'po_plural_forms'             => $po_plural_forms,
+	'po_export_string_max_length' => intval( isset( $po_export_string_max_length ) ? $po_export_string_max_length : 0 ),
 );
 
 
