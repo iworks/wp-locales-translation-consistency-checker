@@ -54,6 +54,7 @@ class wp_locales_translation_consistency_checker {
 	private $meta_last_update = '_wp_tc_last_update';
 	private $meta_string      = '_wp_tc_string';
 	private $meta_url         = '_wp_tc_url';
+	private $meta_translation = '_wp_tc_translation';
 
 	public function __construct() {
 		/**
@@ -71,6 +72,7 @@ class wp_locales_translation_consistency_checker {
 		 * Plugin Custom Hooks
 		 */
 		add_action( 'wp_locales_translation_consistency_checker_run', array( $this, 'run' ) );
+		add_action( 'wp_locales_translation_consistency_checker_export', array( $this, 'export' ) );
 	}
 
 	public function ajax_done() {
@@ -168,7 +170,6 @@ class wp_locales_translation_consistency_checker {
 			$root . '/themes',
 		);
 		$files = array();
-
 		foreach ( $dirs as $dir ) {
 			if ( ! is_dir( $dir ) ) {
 				continue;
@@ -201,7 +202,6 @@ class wp_locales_translation_consistency_checker {
 				$this->check( $string, $config );
 			}
 		}
-
 	}
 
 	private function check( $string, $config ) {
@@ -250,6 +250,7 @@ class wp_locales_translation_consistency_checker {
 				return;
 			}
 			add_post_meta( $post_id, $this->meta_last_update, time(), true );
+			add_post_meta( $post_id, $this->meta_translation, '', true );
 			add_post_meta( $post_id, $this->meta_url, $url, true );
 			add_post_meta( $post_id, $this->meta_counter, 0, true );
 			add_post_meta( $post_id, $this->meta_string, $string, true );
@@ -265,6 +266,9 @@ class wp_locales_translation_consistency_checker {
 		if ( preg_match( '/There are (\d+) different translations/', $response['body'], $matches ) ) {
 			update_post_meta( $post_id, $this->meta_counter, intval( $matches[1] ) );
 		} else {
+			if ( preg_match( '@<strong>(.+)</strong>@', $response['body'], $matches ) ) {
+				update_post_meta( $post_id, $this->meta_translation, html_entity_decode( $matches[1] ) );
+			}
 			update_post_meta( $post_id, $this->meta_counter, 0 );
 		}
 	}
@@ -284,6 +288,59 @@ class wp_locales_translation_consistency_checker {
 			'supports'            => array( 'title' ),
 		);
 		register_post_type( $this->post_type_name, $args );
+	}
+
+	public function export( $config ) {
+		global $wpdb;
+		error_reporting( 0 );
+		echo '# Translation of WordPress - 5.7.x' . PHP_EOL;
+		echo 'msgid ""' . PHP_EOL;
+		echo 'msgstr ""' . PHP_EOL;
+		printf( '"PO-Revision-Date: %s0000\n"%s', date( 'c' ), PHP_EOL );
+		echo '"MIME-Version: 1.0\n"' . PHP_EOL;
+		echo '"Content-Type: text/plain; charset=UTF-8\n"' . PHP_EOL;
+		echo '"Content-Transfer-Encoding: 8bit\n"' . PHP_EOL;
+		printf( '"Plural-Forms: %s;\n"%s', $config['po_plural_forms'], PHP_EOL );
+		echo '"X-Generator: WP Translation Consistence Checker\n"' . PHP_EOL;
+		printf( '"Language: %s\n"%s', $config['po_short_language_code'], PHP_EOL );
+		echo '"Project-Id-Version: WordPress - Common Translation\n"' . PHP_EOL;
+		echo PHP_EOL;
+		/**
+		 * get Consistence Translations
+		 */
+		$args  = array(
+			'post_type'  => $this->post_type_name,
+			'nopaging'   => true,
+			'meta_query' => array(
+				'relation' => 'AND',
+				array(
+					'key'     => $this->meta_counter,
+					'value'   => 0,
+					'compare' => '=',
+					'type'    => 'NUMERIC',
+				),
+				array(
+					'key'     => $this->meta_translation,
+					'value'   => '',
+					'compare' => '!=',
+				),
+			),
+			'fields'     => 'ids',
+		);
+		$query = new WP_Query( $args );
+		foreach ( $query->posts as $post_id ) {
+			printf(
+				'msgid "%s"%s',
+				addslashes( get_post_meta( $post_id, $this->meta_string, true ) ),
+				PHP_EOL
+			);
+			printf(
+				'msgstr "%s"%s',
+				addslashes( get_post_meta( $post_id, $this->meta_translation, true ) ),
+				PHP_EOL
+			);
+			echo PHP_EOL;
+		}
 	}
 }
 
