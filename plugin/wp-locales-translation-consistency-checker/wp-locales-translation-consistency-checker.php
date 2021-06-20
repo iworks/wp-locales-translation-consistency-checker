@@ -55,6 +55,7 @@ class wp_locales_translation_consistency_checker {
 	private $meta_string      = '_wp_tc_string';
 	private $meta_url         = '_wp_tc_url';
 	private $meta_translation = '_wp_tc_translation';
+	private $meta_wordpress   = '_wp_tc_wordpress';
 
 	public function __construct() {
 		/**
@@ -250,6 +251,7 @@ class wp_locales_translation_consistency_checker {
 				return;
 			}
 			add_post_meta( $post_id, $this->meta_last_update, time(), true );
+			add_post_meta( $post_id, $this->meta_wordpress, 'no', true );
 			add_post_meta( $post_id, $this->meta_translation, '', true );
 			add_post_meta( $post_id, $this->meta_url, $url, true );
 			add_post_meta( $post_id, $this->meta_counter, 0, true );
@@ -271,6 +273,11 @@ class wp_locales_translation_consistency_checker {
 			}
 			update_post_meta( $post_id, $this->meta_counter, 0 );
 		}
+		/**
+		 * Is WordPress Project?
+		 */
+		$value = preg_match( '/class="project-wordpress"/', $response['body'] ) ? 'yes' : 'no';
+		update_post_meta( $post_id, $this->meta_wordpress, $value );
 	}
 
 	public function register() {
@@ -332,9 +339,10 @@ class wp_locales_translation_consistency_checker {
 			$msgid = get_post_meta( $post_id, $this->meta_string, true );
 			if (
 				isset( $config['po_export_string_max_length'] )
-				&& 0 < $config['po_export_string_max_length'] ) {
+				&& 0 < $config['po_export_string_max_length']
 				&& strlen( $msgid ) > $config['po_export_string_max_length']
-				) continue;
+			) {
+				continue;
 			}
 			printf(
 				'msgid "%s"%s',
