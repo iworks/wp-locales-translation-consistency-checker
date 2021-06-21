@@ -126,7 +126,13 @@ class wp_locales_translation_consistency_checker {
 				),
 			)
 		);
-		$query->set( 'orderby', $this->meta_counter );
+		$query->set(
+			'orderby',
+			array(
+				$this->meta_counter => 'DESC',
+				'title'             => 'ASC',
+			)
+		);
 	}
 
 	public function the_content( $content ) {
