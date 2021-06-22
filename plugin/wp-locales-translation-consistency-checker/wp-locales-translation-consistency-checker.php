@@ -146,7 +146,11 @@ class wp_locales_translation_consistency_checker {
 			return $content;
 		}
 		$content  = '<tr>';
-		$content .= sprintf( '<td>%d</td>', get_post_meta( get_the_ID(), $this->meta_counter, true ) );
+		$content .= sprintf(
+			'<td style="%s">%d</td>',
+			get_post_meta( get_the_ID(), $this->meta_wordpress, true ) === 'yes' ? 'border-left: 3px solid black;' : '',
+			get_post_meta( get_the_ID(), $this->meta_counter, true )
+		);
 		$content .= sprintf(
 			'<td><a href="%s" target="_blank">%s</a></td>',
 			get_post_meta( get_the_ID(), $this->meta_url, true ),
