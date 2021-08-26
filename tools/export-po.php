@@ -41,6 +41,8 @@ $config = array(
 	'po_short_language_code'      => $po_short_language_code,
 	'po_plural_forms'             => $po_plural_forms,
 	'po_export_string_max_length' => intval( isset( $po_export_string_max_length ) ? $po_export_string_max_length : 0 ),
+	'limit'                       => intval( isset( $limit ) ? $limit : 500 ),
+	'dir'                         => isset( $dir ) ? $dir : '/tmp',
 );
 
 

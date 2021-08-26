@@ -310,22 +310,22 @@ class wp_locales_translation_consistency_checker {
 	public function export( $config ) {
 		global $wpdb;
 		error_reporting( 0 );
-		echo '# Translation of WordPress - 5.7.x' . PHP_EOL;
-		echo 'msgid ""' . PHP_EOL;
-		echo 'msgstr ""' . PHP_EOL;
-		printf( '"PO-Revision-Date: %s0000\n"%s', date( 'c' ), PHP_EOL );
-		echo '"MIME-Version: 1.0\n"' . PHP_EOL;
-		echo '"Content-Type: text/plain; charset=UTF-8\n"' . PHP_EOL;
-		echo '"Content-Transfer-Encoding: 8bit\n"' . PHP_EOL;
-		printf( '"Plural-Forms: %s;\n"%s', $config['po_plural_forms'], PHP_EOL );
-		echo '"X-Generator: WP Translation Consistence Checker\n"' . PHP_EOL;
-		printf( '"Language: %s\n"%s', $config['po_short_language_code'], PHP_EOL );
-		echo '"Project-Id-Version: WordPress - Common Translation\n"' . PHP_EOL;
-		echo PHP_EOL;
+		$header  = '# Translation of WordPress' . PHP_EOL;
+		$header .= 'msgid ""' . PHP_EOL;
+		$header .= 'msgstr ""' . PHP_EOL;
+		$header .= sprintf( '"PO-Revision-Date: %s0000\n"%s', date( 'c' ), PHP_EOL );
+		$header .= '"MIME-Version: 1.0\n"' . PHP_EOL;
+		$header .= '"Content-Type: text/plain; charset=UTF-8\n"' . PHP_EOL;
+		$header .= '"Content-Transfer-Encoding: 8bit\n"' . PHP_EOL;
+		$header .= sprintf( '"Plural-Forms: %s;\n"%s', $config['po_plural_forms'], PHP_EOL );
+		$header .= '"X-Generator: WP Translation Consistence Checker\n"' . PHP_EOL;
+		$header .= sprintf( '"Language: %s\n"%s', $config['po_short_language_code'], PHP_EOL );
+		$header .= '"Project-Id-Version: WordPress - Common Translation\n"' . PHP_EOL;
+		$header .= PHP_EOL;
 		/**
 		 * get Consistence Translations
 		 */
-		$args  = array(
+		$args = array(
 			'post_type'  => $this->post_type_name,
 			'nopaging'   => true,
 			'meta_query' => array(
@@ -344,27 +344,64 @@ class wp_locales_translation_consistency_checker {
 			),
 			'fields'     => 'ids',
 		);
+
+		$is_open = false;
+		$counter = 0;
+
+		$file_counter = 0;
+
+		$handler;
+
 		$query = new WP_Query( $args );
 		foreach ( $query->posts as $post_id ) {
+			if ( $is_open && $counter > $config['limit'] ) {
+				fclose( $handler );
+				$is_open = false;
+			}
+			if ( ! $is_open ) {
+				$filename = sprintf(
+					'%s/pl-%03d.po',
+					$config['dir'],
+					$file_counter++
+				);
+				echo $filename,PHP_EOL;
+				$handler = fopen( $filename, 'w' );
+				fwrite( $handler, $header );
+				$is_open = true;
+			}
 			$msgid = get_post_meta( $post_id, $this->meta_string, true );
 			if (
 				isset( $config['po_export_string_max_length'] )
 				&& 0 < $config['po_export_string_max_length']
-				&& strlen( $msgid ) > $config['po_export_string_max_length']
+				&& (
+					0 < $config['po_export_string_max_length']
+					&& strlen( $msgid ) > $config['po_export_string_max_length']
+				)
 			) {
 				continue;
 			}
-			printf(
-				'msgid "%s"%s',
-				addslashes( $msgid ),
-				PHP_EOL
+			fwrite(
+				$handler,
+				sprintf(
+					'msgid "%s"%s',
+					addslashes( $msgid ),
+					PHP_EOL
+				)
 			);
-			printf(
-				'msgstr "%s"%s',
-				addslashes( get_post_meta( $post_id, $this->meta_translation, true ) ),
-				PHP_EOL
+			fwrite(
+				$handler,
+				sprintf(
+					'msgstr "%s"%s',
+					addslashes( get_post_meta( $post_id, $this->meta_translation, true ) ),
+					PHP_EOL
+				)
 			);
-			echo PHP_EOL;
+			fwrite( $handler, PHP_EOL );
+			$counter++;
+		}
+		if ( $is_open ) {
+			fclose( $handler );
+			$is_open = false;
 		}
 	}
 }
