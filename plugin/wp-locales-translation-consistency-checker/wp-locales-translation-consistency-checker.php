@@ -325,7 +325,7 @@ class wp_locales_translation_consistency_checker {
 		/**
 		 * get Consistence Translations
 		 */
-		$args = array(
+		$args         = array(
 			'post_type'  => $this->post_type_name,
 			'nopaging'   => true,
 			'meta_query' => array(
@@ -344,19 +344,16 @@ class wp_locales_translation_consistency_checker {
 			),
 			'fields'     => 'ids',
 		);
-
-		$is_open = false;
-		$counter = 0;
-
+		$is_open      = false;
+		$counter      = 0;
 		$file_counter = 0;
-
 		$handler;
-
 		$query = new WP_Query( $args );
 		foreach ( $query->posts as $post_id ) {
 			if ( $is_open && $counter > $config['limit'] ) {
 				fclose( $handler );
 				$is_open = false;
+				$counter = 0;
 			}
 			if ( ! $is_open ) {
 				$filename = sprintf(
